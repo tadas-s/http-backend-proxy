@@ -80,10 +80,14 @@ var Proxy = function(browser, options){
   }
 
   function wrapScriptWithinInjectorInvoke(script){
-    return '\
-      var el = document.querySelector("' + browser.rootEl + '");\
-      angular.element(el).injector().invoke(function($httpBackend){\
-      ' + script + '});';
+    var wrapper = function(window, rootEl, toBeInvoked) {
+      var el = window.document.querySelector(rootEl);
+      window.angular.element(el).injector().invoke(function($httpBackend) {
+        toBeInvoked($httpBackend);
+      });
+    };
+
+    return '(' + wrapper.toString() + ')(window,' + JSON.stringify(browser.rootEl) + ',(function($httpBackend){' + script + '}));';
   }
 
   if(arguments.length < 3){
