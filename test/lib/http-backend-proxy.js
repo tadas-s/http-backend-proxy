@@ -37,29 +37,38 @@ var Proxy = function(browser, options){
   function buildWhenFunction(funcName){
 
     return function(){
+      var when = function($httpBackend, method, args, signature) {
+        window.httpBackendProxyRegistry = window.httpBackendProxyRegistry || {};
 
-      var whenJS = '$httpBackend.' + funcName + '(' + stringifyArgs(arguments) + ')';
-      var signature = md5(whenJS);
+        if(typeof window.httpBackendProxyRegistry[signature] == 'undefined') {
+          window.httpBackendProxyRegistry[signature] = $httpBackend[method].apply($httpBackend, args);
+        }
 
-      whenJS = [
-        '(function(){',
-        'window.httpBackendProxyRegistry = window.httpBackendProxyRegistry || {};',
-        'return typeof window.httpBackendProxyRegistry["' + signature + '"] == "undefined" ?',
-        'window.httpBackendProxyRegistry["' + signature + '"] = ' + whenJS,
-        ':',
-        'window.httpBackendProxyRegistry["' + signature + '"]',
-        '})()'
-      ].join('');
+        return window.httpBackendProxyRegistry[signature];
+      };
+
+      var signature = md5(funcName + '|' + stringifyArgs(arguments));
+
+      var whenSrc = '(' + when.toString() + ')($httpBackend, ' + JSON.stringify(funcName) + ', [' + stringifyArgs(arguments) + '], ' + JSON.stringify(signature) + ')';
 
       return {
         respond: function() {
+          var respond = function(args, when) {
+              when.respond.apply(when.respond, args);
+          };
 
-          var fullJS = whenJS +'.respond(' + stringifyArgs(arguments) + ');'
+          var respondSrc = '(' + respond.toString() + ')([' + stringifyArgs(arguments) + '], ' + whenSrc + ')';
 
-          return executeOrBuffer(fullJS);
+          return executeOrBuffer(respondSrc);
         },
         passThrough: function() {
-          return executeOrBuffer(whenJS +'.passThrough(' + stringifyArgs(arguments) + ');');
+          var respond = function(args, when) {
+            when.passThrough.apply(when.respond, args);
+          };
+
+          var respondSrc = '(' + respond.toString() + ')([' + stringifyArgs(arguments) + '], ' + whenSrc + ')';
+
+          return executeOrBuffer(respondSrc);
         }
       };
 
