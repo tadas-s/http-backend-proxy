@@ -53,20 +53,20 @@ var Proxy = function(browser, options){
 
       return {
         respond: function() {
-          var respond = function(args, when) {
-              when.respond.apply(when.respond, args);
+          var respond = function(when, args) {
+            when.respond.apply(when, args);
           };
 
-          var respondSrc = '(' + respond.toString() + ')([' + stringifyArgs(arguments) + '], ' + whenSrc + ')';
+          var respondSrc = '(' + respond.toString() + ')(' + whenSrc + ', [' + stringifyArgs(arguments) + '])';
 
           return executeOrBuffer(respondSrc);
         },
         passThrough: function() {
-          var respond = function(args, when) {
-            when.passThrough.apply(when.respond, args);
+          var respond = function(when) {
+            when.passThrough();
           };
 
-          var respondSrc = '(' + respond.toString() + ')([' + stringifyArgs(arguments) + '], ' + whenSrc + ')';
+          var respondSrc = '(' + respond.toString() + ')(' + whenSrc + ')';
 
           return executeOrBuffer(respondSrc);
         }
@@ -96,7 +96,7 @@ var Proxy = function(browser, options){
       });
     };
 
-    return '(' + wrapper.toString() + ')(window,' + JSON.stringify(browser.rootEl) + ',(function($httpBackend){' + script + '}));';
+    return '(' + wrapper.toString() + ')(window,' + JSON.stringify(browser.rootEl) + ',function($httpBackend){;' + script + ';})';
   }
 
   if(arguments.length < 3){
