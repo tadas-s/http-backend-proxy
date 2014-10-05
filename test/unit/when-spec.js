@@ -160,16 +160,13 @@ describe('Proxy.when JavaScript generation', function(){
     expect(responseMock.respond.calls[0].args[0].toString()).toEqual("function (method, url, data, headers){ return [200, 'you called ' + url];}");
   });
 
-  /*
   for(var i = 0; i < regexScenarios.length; i++){ (function(scenario){
     it('should generate correct JavaScript for calls with regular expression '  + scenario.desc,
     function () {
-
       proxy.when('GET', scenario.regex ).passThrough();
-      expect(browser.executeScript.calls[0].args[0]).toContain(
-        '$httpBackend.when("GET", ' + scenario.output + ').passThrough();');
+      evalAndRunGeneratedCode();
 
+      expect($httpBackendMock.when).toHaveBeenCalledWith('GET', scenario.regex);
     });
-  })(regexScenarios[i])} */
-
+  })(regexScenarios[i])}
 });
