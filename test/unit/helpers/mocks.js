@@ -1,10 +1,18 @@
-module.exports = {
+"use strict";
 
+module.exports = {
   $httpBackendMock: function() {
-    return {
+    var methods = {
       when: function() {},
       expect: function() {}
     };
+
+    ['GET', 'HEAD', 'DELETE', 'POST', 'PUT', 'PATCH', 'JSONP'].forEach(function(method) {
+      methods['when' + method] = function() {};
+      methods['expect' + method] = function() {};
+    });
+
+    return methods;
   },
 
   responseMock: function() {

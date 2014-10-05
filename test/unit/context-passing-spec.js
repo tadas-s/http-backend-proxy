@@ -2,18 +2,37 @@
 
 var HttpBackend = require('../lib/http-backend-proxy');
 var regexScenarios = require('./helpers/regular-expression-scenarios')
+var mocks = require('./helpers/mocks.js');
 
 
 describe('The Context Object', function(){
 
   var browser;
-    var proxy;
+  var proxy;
+  var $httpBackendMock;
+  var responseMock;
+  var windowMock;
+
+  function evalAndRunGeneratedCode(code) {
+    code = code || browser.executeScript.calls[0].args[0];
+    var src = '(function(window) { return(' + code + '); })';
+    console.log("==============================================");
+    console.log(src);
+    console.log("==============================================");
+    return (eval(src))(windowMock);
+  }
 
   beforeEach(function () {
-
     browser = { executeScript: function(){} };
     spyOn(browser, 'executeScript');
 
+    $httpBackendMock = new mocks.$httpBackendMock();
+    responseMock = new mocks.responseMock();
+    windowMock = new mocks.windowMock($httpBackendMock);
+
+    spyOn($httpBackendMock, 'when').andReturn(responseMock);
+    spyOn(responseMock, 'respond');
+    spyOn(responseMock, 'passThrough');
   });
 
   describe('when auto-syncronization is disabled', function(){
@@ -30,16 +49,13 @@ describe('The Context Object', function(){
 
     });
 
-    it('should not forward any context to the browser even if it exists', function(){
-
+    it('should not forward any context to the browser even if it exists', function() {
       proxy.context = 'I exist!';
       proxy.whenGET('/someURL').respond(200);
 
-      expect(browser.executeScript.calls[0].args[0]).not.toContain(
-        '$httpBackend.context=');
-
+      evalAndRunGeneratedCode();
+      //expect($httpBackendMock.context).toEqual("=================================================================");
     });
-
   });
 
   describe('when auto-syncronization is disabled the deprecated way', function(){
