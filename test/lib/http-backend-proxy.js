@@ -27,6 +27,7 @@ var Proxy = function(browser, options){
   var buffer = [];
 
   createMethods(this, 'when', buildWhenFunction);
+  createMethods(this, 'expect', buildWhenFunction);
 
   function createMethods(proxy, prefix, functionBuilder) {
     ['', 'GET', 'PUT', 'HEAD', 'POST', 'DELETE', 'PATCH', 'JSONP'].forEach(function(method) {
@@ -96,7 +97,7 @@ var Proxy = function(browser, options){
       });
     };
 
-    return '(' + wrapper.toString() + ')(window,' + JSON.stringify(browser.rootEl) + ',function($httpBackend){;' + script + ';})';
+    return 'return (' + wrapper.toString() + ')(window,' + JSON.stringify(browser.rootEl) + ',function($httpBackend){;' + script + ';});';
   }
 
   if(arguments.length < 3){
@@ -269,6 +270,42 @@ var Proxy = function(browser, options){
     return crypto.createHash('md5').update(str).digest('hex');
   }
 
+  /**
+   * Proxy call to $httpBackend.verifyNoOutstandingExpectation()
+   *
+   * @throws Error in case there are unsatisfied expectations
+   */
+  this.verifyNoOutstandingExpectation = function() {
+    var fn = function($httpBackend) {
+      return $httpBackend.verifyNoOutstandingExpectation();
+    };
+    var script = wrapScriptWithinInjectorInvoke('(' + fn.toString() + ')($httpBackend)');
+
+    return browser.executeScript(script);
+  };
+
+  /**
+   * Proxy call to $httpBackend.verifyNoOutstandingRequest()
+   *
+   * @throws Error if there are outstanding requests that need to be flushed.
+   */
+  this.verifyNoOutstandingRequest = function() {
+    var fn = function($httpBackend) {
+      return $httpBackend.verifyNoOutstandingRequest();
+    };
+    var script = wrapScriptWithinInjectorInvoke('(' + fn.toString() + ')($httpBackend)');
+
+    return browser.executeScript(script);
+  };
+
+  this.flush_ = function() {
+    var fn = function($httpBackend) {
+      return $httpBackend.flush();
+    };
+    var script = wrapScriptWithinInjectorInvoke('(' + fn.toString() + ')($httpBackend)');
+
+    return browser.executeScript(script);
+  };
 };
 
 module.exports = Proxy;

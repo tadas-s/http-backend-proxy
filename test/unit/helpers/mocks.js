@@ -4,7 +4,10 @@ module.exports = {
   $httpBackendMock: function() {
     var methods = {
       when: function() {},
-      expect: function() {}
+      expect: function() {},
+      verifyNoOutstandingExpectation: function() {},
+      verifyNoOutstandingRequest: function() {},
+      flush: function() {}
     };
 
     ['GET', 'HEAD', 'DELETE', 'POST', 'PUT', 'PATCH', 'JSONP'].forEach(function(method) {
