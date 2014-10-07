@@ -20,7 +20,7 @@ describe('Setting expectation', function(){
   });
 
   describe('flush_()', function() {
-    it('it fails when there is no expectations and nothing to flush', function() {
+    it('it fails when there are no expectations configured and nothing to flush', function() {
       httpBackend.flush_().then(function() {
         self.fail('this call to flush_() must not resolve successfully');
       }, function(error) {
@@ -52,6 +52,10 @@ describe('Setting expectation', function(){
   });
 
   describe('verifyNoOutstandingExpectation()', function() {
+
+    it('it does not complain when there are no expectations configured', function() {
+      httpBackend.verifyNoOutstandingExpectation()
+    });
 
     describe('with basic GET requests', function() {
 
