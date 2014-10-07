@@ -39,13 +39,17 @@ var Proxy = function(browser, options){
 
     return function(){
       var when = function($httpBackend, method, args, signature) {
-        window.httpBackendProxyRegistry = window.httpBackendProxyRegistry || {};
+        if(/^when/.test(method)) {
+          window.httpBackendProxyRegistry = window.httpBackendProxyRegistry || {};
 
-        if(typeof window.httpBackendProxyRegistry[signature] == 'undefined') {
-          window.httpBackendProxyRegistry[signature] = $httpBackend[method].apply($httpBackend, args);
+          if(typeof window.httpBackendProxyRegistry[signature] == 'undefined') {
+            window.httpBackendProxyRegistry[signature] = $httpBackend[method].apply($httpBackend, args);
+          }
+
+          return window.httpBackendProxyRegistry[signature];
+        } else if(/^expect/.test(method)) {
+          return $httpBackend[method].apply($httpBackend, args);
         }
-
-        return window.httpBackendProxyRegistry[signature];
       };
 
       var signature = md5(funcName + '|' + stringifyArgs(arguments));

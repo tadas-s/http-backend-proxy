@@ -115,9 +115,6 @@ describe('Setting expectation', function(){
         httpBackend.flush_();
         expect(element(by.id('r-data')).getText()).toEqual('{"mySecret":"Dark.."}');
 
-        // TODO: signature of this matches the previous one
-        // HOWEVER expectations are "single use" and cannot be altered like
-        // responses of whenXXX...
         httpBackend.expectGET('/secret').respond(200, {"mySecret": "Dark.."});
         element(by.id('method')).clear();
         element(by.id('method')).sendKeys('GET');
