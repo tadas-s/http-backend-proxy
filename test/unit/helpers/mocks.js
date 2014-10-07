@@ -48,5 +48,9 @@ module.exports = {
         }
       }
     };
+  },
+
+  PromiseMock: function() {
+    this.then = function() {};
   }
 };

@@ -34,8 +34,8 @@ describe('onLoad', function(){
   });
 
   it('should configure the browser early enough to respond to http requests name in module.run() scripts.', function(){
-      expect(element(by.id('r-status')).getText()).toEqual('205');
-      expect(element(by.id('r-data')).getText()).toEqual('"chocolate"');
+    expect(element(by.id('r-status')).getText()).toEqual('205');
+    expect(element(by.id('r-data')).getText()).toEqual('"chocolate"');
   });
 
   describe('if reset', function(){

@@ -88,7 +88,7 @@ var Proxy = function(browser, options){
       buffer.push(script);
       if(buffer.length == 1) wrapBrowserGet();
     } else {
-      script = wrapScriptWithinInjectorInvoke(getContextDefinitionScript() + script);
+      script = wrapScriptWithinInjectorInvoke(getContextDefinitionScript() + ';' + script);
       return browser.executeScript(script);
     }
   }
@@ -110,7 +110,7 @@ var Proxy = function(browser, options){
 
     this.flush = function(){
       if(buffer.length > 0){
-        var script = wrapScriptWithinInjectorInvoke(getContextDefinitionScript() + buffer.join('\n'));
+        var script = wrapScriptWithinInjectorInvoke(getContextDefinitionScript() + ';' + buffer.join(';'));
         buffer = [];
         return browser.executeScript(script);
       } else {
@@ -171,10 +171,10 @@ var Proxy = function(browser, options){
     var parent = arguments[2];
 
     var buildModuleScript = function (){
-      var script = getContextDefinitionScript(parent[options.contextField]) + buffer.join('\n');
+      var script = getContextDefinitionScript(parent[options.contextField]) + ';' + buffer.join('\n');
       return 'angular.module("http-backend-proxy", ["ngMockE2E"]).run(function($httpBackend){' +
         script.replace(/window\.\$httpBackend/g, '$httpBackend') + '});'
-    }
+    };
 
     wrapBrowserGet = function(){
       var get = browser.get;
@@ -213,13 +213,16 @@ var Proxy = function(browser, options){
   }
 
   function getContextDefinitionScript(context){
+    var fn = function($httpBackend, contextField, context) {
+      $httpBackend[contextField] = context;
+    };
 
     if(options.contextAutoSync){
       context = context || proxy[options.contextField];
     }
 
     if(typeof(context) !== 'undefined'){
-      return '$httpBackend.' + options.contextField + '=' + stringifyObject(context) + ';';
+      return '(' + fn.toString() + ')($httpBackend,' + JSON.stringify(options.contextField) + ', ' + stringifyObject(context) + ')';
     } else {
       return '';
     }

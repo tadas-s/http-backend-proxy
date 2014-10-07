@@ -1,20 +1,37 @@
 'use strict';
 
 var HttpBackend = require('../lib/http-backend-proxy');
-var Browser = require('./helpers/protractor-browser')
+var mocks = require('./helpers/mocks.js');
 
 describe('Buffered configuration', function(){
 
   var browser;
+  var proxy;
+  var $httpBackendMock;
+  var responseMock;
+  var windowMock;
 
   beforeEach(function () {
+    browser = {
+      executeScript: function(script) {
+        var src = '(function(window) { ' + script + ' })';
+        //console.log('---------------------------------------------------');
+        //console.log(src);
+        //console.log('---------------------------------------------------');
+        (eval(src))(windowMock);
 
-    browser = new Browser();
+        return (new mocks.PromiseMock());
+      }
+    };
+    spyOn(browser, 'executeScript').andCallThrough();
 
-  });
+    $httpBackendMock = new mocks.$httpBackendMock();
+    responseMock = new mocks.responseMock();
+    windowMock = new mocks.windowMock($httpBackendMock);
 
-  afterEach(function () {
-    browser.cleanUp();
+    spyOn($httpBackendMock, 'whenGET').andReturn(responseMock);
+    spyOn(responseMock, 'respond');
+    spyOn(responseMock, 'passThrough');
   });
 
   describe('A proxy with buffering not configured', function () {
@@ -27,36 +44,28 @@ describe('Buffered configuration', function(){
 
       returnValue1 = proxy.whenGET('/url1').passThrough();
       returnValue2 = proxy.whenGET('/url2').passThrough();
-
     });
 
-    it('should make two executeScript calls', function () {
+    it('should configure two expectations', function () {
       expect(browser.executeScript.calls.length).toEqual(2);
-    });
-
-    it('should call executeScript first for the first call to the proxy', function () {
-      expect(browser.executeScript.calls[0].args[0]).toContain(
-        '$httpBackend.whenGET("/url1").passThrough();');
-    });
-
-    it('should call executeScript again for the second call to the proxy', function () {
-      expect(browser.executeScript.calls[1].args[0]).toContain(
-        '$httpBackend.whenGET("/url2").passThrough();');
+      expect($httpBackendMock.whenGET).toHaveBeenCalledWith('/url1');
+      expect($httpBackendMock.whenGET).toHaveBeenCalledWith('/url2');
     });
 
     it('should pass the data context on each call to the proxy', function () {
+      // TODO: can't spy on setter so this test case is bit weak
       expect(browser.executeScript.calls[0].args[0]).toContain(
-        '$httpBackend.context={};');
+        '$httpBackend[contextField] = context;');
       expect(browser.executeScript.calls[1].args[0]).toContain(
-        '$httpBackend.context={};');
+        '$httpBackend[contextField] = context;');
     });
 
     it('should return a pending promise for the first call', function(){
-      expect(returnValue1.isComplete).toEqual(false);
+      expect(returnValue1).toEqual(jasmine.any(mocks.PromiseMock));
     });
 
     it('should return a pending promise for the second call', function(){
-      expect(returnValue2.isComplete).toEqual(false);
+      expect(returnValue2).toEqual(jasmine.any(mocks.PromiseMock));
     });
 
   });
@@ -67,40 +76,32 @@ describe('Buffered configuration', function(){
 
     beforeEach(function () {
 
-      proxy = new HttpBackend(browser, {buffer: false});
+      proxy = new HttpBackend(browser);
 
       returnValue1 = proxy.whenGET('/url1').passThrough();
       returnValue2 = proxy.whenGET('/url2').passThrough();
-
     });
 
-    it('should make two executeScript calls', function () {
+    it('should configure two expectations', function () {
       expect(browser.executeScript.calls.length).toEqual(2);
-    });
-
-    it('should call executeScript first for the first call to the proxy', function () {
-      expect(browser.executeScript.calls[0].args[0]).toContain(
-        '$httpBackend.whenGET("/url1").passThrough();');
-    });
-
-    it('should call executeScript again for the second call to the proxy', function () {
-      expect(browser.executeScript.calls[1].args[0]).toContain(
-        '$httpBackend.whenGET("/url2").passThrough();');
+      expect($httpBackendMock.whenGET).toHaveBeenCalledWith('/url1');
+      expect($httpBackendMock.whenGET).toHaveBeenCalledWith('/url2');
     });
 
     it('should pass the data context on each call to the proxy', function () {
+      // TODO: can't spy on setter so this test case is bit weak
       expect(browser.executeScript.calls[0].args[0]).toContain(
-        '$httpBackend.context={};');
+        '$httpBackend[contextField] = context;');
       expect(browser.executeScript.calls[1].args[0]).toContain(
-        '$httpBackend.context={};');
+        '$httpBackend[contextField] = context;');
     });
 
     it('should return a pending promise for the first call', function(){
-      expect(returnValue1.isComplete).toEqual(false);
+      expect(returnValue1).toEqual(jasmine.any(mocks.PromiseMock));
     });
 
     it('should return a pending promise for the second call', function(){
-      expect(returnValue2.isComplete).toEqual(false);
+      expect(returnValue2).toEqual(jasmine.any(mocks.PromiseMock));
     });
 
   });
@@ -133,7 +134,7 @@ describe('Buffered configuration', function(){
     describe('before flushing the buffer', function () {
 
       it('shoud make no executeScript calls', function () {
-        expect(browser.executeScript.calls.length).toEqual(0);
+        expect(browser.executeScript).not.toHaveBeenCalled();
       });
 
     });
@@ -147,7 +148,7 @@ describe('Buffered configuration', function(){
       });
 
       it('flush should return a pending promise.', function () {
-        expect(returnValue1.isComplete).toEqual(false);
+        expect(returnValue1).toEqual(jasmine.any(mocks.PromiseMock));
       });
 
       it('should make one executeScript call', function () {
@@ -155,17 +156,12 @@ describe('Buffered configuration', function(){
       });
 
       it('should include all calls to the proxy in that single call', function () {
-        expect(browser.executeScript.calls[0].args[0]).toContain(
-          '$httpBackend.whenGET("/url1").passThrough();'
-        );
-        expect(browser.executeScript.calls[0].args[0]).toContain(
-          '$httpBackend.whenGET("/url2").passThrough();'
-        );
+        expect($httpBackendMock.whenGET).toHaveBeenCalledWith('/url1');
+        expect($httpBackendMock.whenGET).toHaveBeenCalledWith('/url2');
       });
 
       it('should pass the current data context to the browser', function () {
-        expect(browser.executeScript.calls[0].args[0]).toContain(
-          '$httpBackend.context={"value":"current"};');
+        expect($httpBackendMock.context).toEqual({value: "current"});
       });
 
       describe('additional calls to flush', function () {

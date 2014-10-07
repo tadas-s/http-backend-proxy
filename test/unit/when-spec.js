@@ -14,7 +14,7 @@ describe('Proxy.when JavaScript generation', function(){
 
   function evalAndRunGeneratedCode(code) {
     code = code || browser.executeScript.calls[0].args[0];
-    var src = '(function(window) { return(' + code + '); })';
+    var src = '(function(window) { ' + code + ' })';
     return (eval(src))(windowMock);
   }
 
