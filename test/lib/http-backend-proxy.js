@@ -171,7 +171,7 @@ var Proxy = function(browser, options){
     var parent = arguments[2];
 
     var buildModuleScript = function (){
-      var script = getContextDefinitionScript(parent[options.contextField]) + ';' + buffer.join('\n');
+      var script = getContextDefinitionScript(parent[options.contextField]) + ';' + buffer.join(';');
       return 'angular.module("http-backend-proxy", ["ngMockE2E"]).run(function($httpBackend){' +
         script.replace(/window\.\$httpBackend/g, '$httpBackend') + '});'
     };
