@@ -19,10 +19,10 @@ describe('Setting expectation', function(){
     httpBackend = new HttpBackend(browser);
   });
 
-  describe('flush_()', function() {
+  describe('flushPending()', function() {
     it('it fails when there are no expectations configured and nothing to flush', function() {
-      httpBackend.flush_().then(function() {
-        self.fail('this call to flush_() must not resolve successfully');
+      httpBackend.flushPending().then(function() {
+        self.fail('this call to flushPending() must not resolve successfully');
       }, function(error) {
         expect(error.message).toContain('No pending request to flush !');
       });
@@ -31,8 +31,8 @@ describe('Setting expectation', function(){
     it('it fails when there is nothing to flush', function() {
       httpBackend.expectGET('/remote').respond(200, {msg: "You called /remote"});
 
-      httpBackend.flush_().then(function() {
-        self.fail('this call to flush_() must not resolve successfully');
+      httpBackend.flushPending().then(function() {
+        self.fail('this call to flushPending() must not resolve successfully');
       }, function(error) {
         expect(error.message).toContain('No pending request to flush !');
       });
@@ -45,7 +45,7 @@ describe('Setting expectation', function(){
       element(by.id('url')).sendKeys('remote');
       element(by.id('call')).click();
 
-      httpBackend.flush_();
+      httpBackend.flushPending();
 
       expect(element(by.id('r-data')).getText()).toEqual('{"msg":"You called /remote"}');
     });
@@ -103,7 +103,7 @@ describe('Setting expectation', function(){
         element(by.id('method')).sendKeys('GET');
         element(by.id('url')).sendKeys('secret');
         element(by.id('call')).click();
-        httpBackend.flush_();
+        httpBackend.flushPending();
         expect(element(by.id('r-data')).getText()).toEqual('{"mySecret":"Nothing!"}');
 
         browser.sleep(3000);
@@ -116,7 +116,7 @@ describe('Setting expectation', function(){
         element(by.id('data')).clear();
         element(by.id('data')).sendKeys('{"mySecret": "Dark.."}');
         element(by.id('call')).click();
-        httpBackend.flush_();
+        httpBackend.flushPending();
         expect(element(by.id('r-data')).getText()).toEqual('{"mySecret":"Dark.."}');
 
         httpBackend.expectGET('/secret').respond(200, {"mySecret": "Dark.."});
@@ -126,7 +126,7 @@ describe('Setting expectation', function(){
         element(by.id('url')).sendKeys('secret');
         element(by.id('data')).clear();
         element(by.id('call')).click();
-        httpBackend.flush_();
+        httpBackend.flushPending();
         expect(element(by.id('r-data')).getText()).toEqual('{"mySecret":"Dark.."}');
 
         httpBackend.verifyNoOutstandingExpectation();

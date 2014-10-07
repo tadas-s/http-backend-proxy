@@ -85,11 +85,11 @@ describe('Proxy', function(){
 
   });
 
-  describe('.flush_()', function() {
+  describe('.flushPending()', function() {
     it('calls $httpBackend.flush()', function() {
       spyOn($httpBackendMock, 'flush').andReturn(undefined);
 
-      proxy.flush_();
+      proxy.flushPending();
 
       expect($httpBackendMock.flush).toHaveBeenCalled();
     });
@@ -98,7 +98,7 @@ describe('Proxy', function(){
       spyOn($httpBackendMock, 'flush').andThrow(new Error('Nothing to flush!'));
 
       expect(function() {
-        proxy.flush_();
+        proxy.flushPending();
       }).toThrow('Nothing to flush!');
 
       expect($httpBackendMock.flush).toHaveBeenCalled();

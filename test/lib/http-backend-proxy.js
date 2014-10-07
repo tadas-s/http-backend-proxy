@@ -302,7 +302,7 @@ var Proxy = function(browser, options){
     return browser.executeScript(script);
   };
 
-  this.flush_ = function() {
+  this.flushPending = function() {
     var fn = function($httpBackend) {
       return $httpBackend.flush();
     };
