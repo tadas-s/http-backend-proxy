@@ -15,12 +15,7 @@ describe('Buffered configuration', function(){
     browser = {
       executeScript: function(script) {
         var src = '(function(window) { ' + script + ' })';
-        //console.log('---------------------------------------------------');
-        //console.log(src);
-        //console.log('---------------------------------------------------');
         (eval(src))(windowMock);
-
-        return (new mocks.PromiseMock());
       }
     };
     spyOn(browser, 'executeScript').andCallThrough();
@@ -59,15 +54,6 @@ describe('Buffered configuration', function(){
       expect(browser.executeScript.calls[1].args[0]).toContain(
         '$httpBackend[contextField] = context;');
     });
-
-    it('should return a pending promise for the first call', function(){
-      expect(returnValue1).toEqual(jasmine.any(mocks.PromiseMock));
-    });
-
-    it('should return a pending promise for the second call', function(){
-      expect(returnValue2).toEqual(jasmine.any(mocks.PromiseMock));
-    });
-
   });
 
   describe('A proxy with buffering turned off', function () {
@@ -95,15 +81,6 @@ describe('Buffered configuration', function(){
       expect(browser.executeScript.calls[1].args[0]).toContain(
         '$httpBackend[contextField] = context;');
     });
-
-    it('should return a pending promise for the first call', function(){
-      expect(returnValue1).toEqual(jasmine.any(mocks.PromiseMock));
-    });
-
-    it('should return a pending promise for the second call', function(){
-      expect(returnValue2).toEqual(jasmine.any(mocks.PromiseMock));
-    });
-
   });
 
   describe('A proxy with buffering turned on', function () {
@@ -147,10 +124,6 @@ describe('Buffered configuration', function(){
         returnValue1 = proxy.flush();
       });
 
-      it('flush should return a pending promise.', function () {
-        expect(returnValue1).toEqual(jasmine.any(mocks.PromiseMock));
-      });
-
       it('should make one executeScript call', function () {
         expect(browser.executeScript.calls.length).toEqual(1);
       });
@@ -169,7 +142,7 @@ describe('Buffered configuration', function(){
         var returnValue2;
 
         beforeEach(function () {
-          returnValue2 = proxy.flush()
+          returnValue2 = proxy.flush();
         });
 
         it('should not call executeScript a second time', function () {

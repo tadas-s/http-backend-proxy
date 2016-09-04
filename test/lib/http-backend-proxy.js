@@ -6,6 +6,7 @@
 'use strict';
 
 var crypto = require('crypto');
+var protractor = require('protractor');
 
 var Proxy = function(browser, options){
 

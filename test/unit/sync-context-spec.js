@@ -1,19 +1,40 @@
 'use strict';
 
 var HttpBackend = require('../lib/http-backend-proxy');
-var Browser = require('./helpers/protractor-browser')
+var Browser = require('./helpers/protractor-browser');
+var mocks = require('./helpers/mocks.js');
 
 describe('The syncContext method', function(){
 
-    var browser;
+  var browser;
+  var proxy;
+  var $httpBackendMock;
+  var responseMock;
+  var windowMock;
 
-    beforeEach(function () {
-        browser = new Browser();
-    });
+  beforeEach(function () {
+    browser = {
+      executeScript: function(script) {
+        var src = '(function(window) {;' + script + ';})';
+        (eval(src))(windowMock);
 
-    afterEach(function () {
-        browser.cleanUp();
-    });
+        console.log('-------------------------------------------------------');
+        console.log(src);
+        console.log('-------------------------------------------------------');
+
+        return new mocks.PromiseMock();
+      }
+    };
+
+    $httpBackendMock = new mocks.$httpBackendMock();
+    responseMock = new mocks.responseMock();
+    windowMock = new mocks.windowMock($httpBackendMock);
+
+    spyOn($httpBackendMock, 'expect').andReturn(responseMock);
+    spyOn(responseMock, 'respond');
+    spyOn(responseMock, 'passThrough');
+    spyOn(browser, 'executeScript').andCallThrough();
+  });
 
     describe('when buffering is off', function(){
 
@@ -28,20 +49,15 @@ describe('The syncContext method', function(){
         });
 
         it('should return a pending promise', function(){
-            expect(returnValue.isComplete).toEqual(false);
+            expect(returnValue).toEqual(jasmine.any(mocks.PromiseMock));
         });
 
         it('should syncronize the context object to the browser', function(){
-
-            expect(browser.executeScript.calls[0].args[0]).toContain(
-                '$httpBackend.context="myContext";');
-
+            expect($httpBackendMock.context).toEqual('myContext');
         });
 
         it('should not do anything else', function(){
-
-           expect(browser.executeScript.calls.length).toEqual(1);
-
+            expect(browser.executeScript.calls.length).toEqual(1);
         });
     });
 
@@ -59,28 +75,21 @@ describe('The syncContext method', function(){
         });
 
         it('should return a pending promise', function(){
-            expect(returnValue.isComplete).toEqual(false);
+            expect(returnValue).toEqual(jasmine.any(mocks.PromiseMock));
         });
 
         it('should syncronize the context object to the browser', function(){
-
-            expect(browser.executeScript.calls[0].args[0]).toContain(
-                '$httpBackend.context="myContext";');
-
+            expect($httpBackendMock.context).toEqual('myContext');
         });
 
         it('should not do anything else', function(){
-
             expect(browser.executeScript.calls.length).toEqual(1);
-
         });
 
         it('especially not flush the buffer', function(){
-
             browser.executeScript.reset();
             proxy.flush();
             expect(browser.executeScript.calls.length).toEqual(1);
-
         });
     });
 
@@ -97,10 +106,7 @@ describe('The syncContext method', function(){
         });
 
         it('should syncronize the alternative context object to the browser', function(){
-
-            expect(browser.executeScript.calls[0].args[0]).toContain(
-                '$httpBackend.alternative="alternativeContext";');
-
+            expect($httpBackendMock.alternative).toEqual('alternativeContext');
         });
     });
 
@@ -116,10 +122,7 @@ describe('The syncContext method', function(){
         });
 
         it('should syncronize the context object to the browser', function(){
-
-            expect(browser.executeScript.calls[0].args[0]).toContain(
-                '$httpBackend.context={};');
-
+            expect($httpBackendMock.context).toEqual({});
         });
 
     });
@@ -129,24 +132,17 @@ describe('The syncContext method', function(){
         var proxy;
 
         beforeEach(function () {
-
             proxy = new HttpBackend(browser);
             delete proxy.context;
             proxy.syncContext();
-
         });
 
         it('should create the context object on the local proxy', function(){
-
             expect(proxy.context).toEqual({});
-
         });
 
         it('should syncronize the context object to the browser', function(){
-
-            expect(browser.executeScript.calls[0].args[0]).toContain(
-                '$httpBackend.context={};');
-
+            expect($httpBackendMock.context).toEqual({});
         });
 
     });
@@ -158,24 +154,17 @@ describe('The syncContext method', function(){
             var proxy;
 
             beforeEach(function () {
-
                 proxy = new HttpBackend(browser);
                 proxy.context = { value1: 'old1', value2: 'old2'};
                 proxy.syncContext({value2:'new2',value3:'new3'});
-
             });
 
             it('should syncronize the merged context object to the browser', function(){
-
-                expect(browser.executeScript.calls[0].args[0]).toContain(
-                    '$httpBackend.context={"value1":"old1","value2":"new2","value3":"new3"};');
-
+                expect($httpBackendMock.context).toEqual({value1:'old1',value2:'new2',value3:'new3'});
             });
 
             it('should update the local context object with the merged values', function(){
-
                 expect(proxy.context).toEqual({value1:'old1',value2:'new2',value3:'new3'});
-
             });
 
         });

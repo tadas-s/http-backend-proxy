@@ -15,8 +15,8 @@ describe('Proxy', function(){
   beforeEach(function () {
     browser = {
       executeScript: function(script) {
-        var src = '(function(window) { return(' + script + '); })';
-        return (eval(src))(windowMock);
+        var src = '(function(window) {;' + script + ';})';
+        (eval(src))(windowMock);
       }
     };
 

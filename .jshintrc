@@ -1,7 +1,10 @@
 {
   "globalstrict": true,
+  "indent": 2,
   "globals": {
     "angular": false,
-    "require": false
+    "require": false,
+    "describe": false,
+    "it": false
   }
 }
